@@ -1,0 +1,38 @@
+#img, #grille{
+	position : absolute;
+}
+
+#containerImg{
+	margin:auto;
+	border : solid black 2px;
+	padding: 30px;
+	background: white;
+	box-shadow: grey 0px 0px 40px 0px;
+	display : none;
+	position: relative;
+}
+
+#img{
+	border : solid black 1px;
+}
+
+#loader{
+	height:5px;
+	background: green;
+	width:0px;
+}
+
+#actionImg{
+	
+}
+
+#close{
+	position:absolute;
+	right:0px;
+	top:0px;
+	background: red;
+}
+
+#res2{
+	white-space: nowrap;
+}

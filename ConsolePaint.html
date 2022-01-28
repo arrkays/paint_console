@@ -1,0 +1,597 @@
+<style>	
+	#selectColorDiv{
+		border:black 2px solid;
+		display:inline-block;
+		width: 26px;
+		height: 26px;
+		position : absolute;
+		top:0px;left:0px;
+		box-shadow: rgb(255, 255, 255) 0px 0px 0px 2px;
+	}
+	
+	#color2D{
+		cursor:pointer;
+		border:black 1px solid;
+		display:inline-block;
+		width: 482px;
+		position : absolute;
+		right: -505px;
+	}
+	
+	#can{
+		border-top:black 1px solid;
+		cursor: crosshair;
+		display:inline-block;
+		vertical-align:top;
+		    margin-top: 31px;
+	}
+	
+	input[type="number"]{
+		width:50px;
+	}
+	
+	#divCan{
+		margin: 30px 30px 12px 120px;
+		border:black 1px solid;
+		box-shadow: black 0px 0px 10px 0px;
+		position: relative;
+	}
+	
+	#tools{
+		padding-top: 5px;
+		padding-bottom: 2px;
+		border: black 1px solid;
+		position: absolute;
+		left: -85px;
+		display: inline-block;
+		text-align: center;
+	}
+	
+	#tools img{
+		margin: 7px 10px 7px 10px;
+	}
+	
+	#tools button{
+		height: 28px;
+		width: 55px;
+		margin-top: 4px;
+		margin-bottom: 4px;
+	}
+	
+	#res{
+		height:200px;
+		white-space: nowrap; 
+		width:1162px;
+		margin-left:36px;
+	}
+	
+	#tools img, button{
+		cursor:pointer;
+	}
+	
+	#selectedTool{
+		position : absolute;
+		left:-50px;
+		top:138px;
+		width : 44px;
+		height:44px;
+		border : solid black 2px;
+	}
+	
+	h1{
+		
+	}
+	
+	#container{
+		
+	}
+</style>
+<link rel="stylesheet" href="jQRangeSlider/css/iThing.css" type="text/css" />
+
+<div style="display : none">
+pinceau:<select id="color"></select>
+crayon:<input id="pen" type="radio" name="tool" checked>
+pinceau:<input id="bold" type="radio" name="tool">
+saut:<input id="bucket" type="radio" name="tool">
+</div>
+
+<div id="container">
+	<div id="divCan">
+		<div id="tools">
+			ligne<br>
+			<input type="number" id="nbLigne" value="24"/><br>
+			colone<br>
+			<input type="number" id="nbColone" value="80"/><br>
+			<hr>
+			<img src="crayon.png" id="crayon" /><br>
+			<img src="brosse.png" id="brosse"/><br>
+			<img src="pot.png" id="pot"/><br>
+
+			<hr>
+			<button id="annuler" onclick='annuler()'>
+				annuler
+			</button>
+			<hr>
+			<button id="exp">
+				export
+			</button>
+			<br>
+			<button id="copie">
+				copie
+			</button>
+		</div>
+		<img src="portail.jpg" style="position:absolute;"/>
+		<img src="portailBT.jpg" style="position:absolute;right:0px"/>
+		
+		<canvas id="can" >
+		</canvas>
+		
+		<div id = "color2D">
+			<div id="selectColorDiv" >
+			</div>
+		</div>
+	</div>
+	<div id="selectedTool">
+	</div>
+	<textarea id="res" style=""></textarea>
+
+</div>
+
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+<script>
+//init global var
+	let w = 80;
+	let h = 24;
+	let pasX = 8;
+	let pasY = 16;
+	let ctab;
+	let idColor = 0;
+	let color = ["#000000", "#800000", "#008000", "#808000", "#000080", "#800080", "#008080", "#c0c0c0", "#808080", "#ff0000", "#00ff00", "#ffff00", "#0000ff", "#ff00ff", "#00ffff", "#ffffff", "#000000", "#00005f", "#000087", "#0000af", "#0000d7", "#0000ff", "#005f00", "#005f5f", "#005f87", "#005faf", "#005fd7", "#005fff", "#008700", "#00875f", "#008787", "#0087af", "#0087d7", "#0087ff", "#00af00", "#00af5f", "#00af87", "#00afaf", "#00afd7", "#00afff", "#00d700", "#00d75f", "#00d787", "#00d7af", "#00d7d7", "#00d7ff", "#00ff00", "#00ff5f", "#00ff87", "#00ffaf", "#00ffd7", "#00ffff", "#5f0000", "#5f005f", "#5f0087", "#5f00af", "#5f00d7", "#5f00ff", "#5f5f00", "#5f5f5f", "#5f5f87", "#5f5faf", "#5f5fd7", "#5f5fff", "#5f8700", "#5f875f", "#5f8787", "#5f87af", "#5f87d7", "#5f87ff", "#5faf00", "#5faf5f", "#5faf87", "#5fafaf", "#5fafd7", "#5fafff", "#5fd700", "#5fd75f", "#5fd787", "#5fd7af", "#5fd7d7", "#5fd7ff", "#5fff00", "#5fff5f", "#5fff87", "#5fffaf", "#5fffd7", "#5fffff", "#870000", "#87005f", "#870087", "#8700af", "#8700d7", "#8700ff", "#875f00", "#875f5f", "#875f87", "#875faf", "#875fd7", "#875fff", "#878700", "#87875f", "#878787", "#8787af", "#8787d7", "#8787ff", "#87af00", "#87af5f", "#87af87", "#87afaf", "#87afd7", "#87afff", "#87d700", "#87d75f", "#87d787", "#87d7af", "#87d7d7", "#87d7ff", "#87ff00", "#87ff5f", "#87ff87", "#87ffaf", "#87ffd7", "#87ffff", "#af0000", "#af005f", "#af0087", "#af00af", "#af00d7", "#af00ff", "#af5f00", "#af5f5f", "#af5f87", "#af5faf", "#af5fd7", "#af5fff", "#af8700", "#af875f", "#af8787", "#af87af", "#af87d7", "#af87ff", "#afaf00", "#afaf5f", "#afaf87", "#afafaf", "#afafd7", "#afafff", "#afd700", "#afd75f", "#afd787", "#afd7af", "#afd7d7", "#afd7ff", "#afff00", "#afff5f", "#afff87", "#afffaf", "#afffd7", "#afffff", "#d70000", "#d7005f", "#d70087", "#d700af", "#d700d7", "#d700ff", "#d75f00", "#d75f5f", "#d75f87", "#d75faf", "#d75fd7", "#d75fff", "#d78700", "#d7875f", "#d78787", "#d787af", "#d787d7", "#d787ff", "#d7af00", "#d7af5f", "#d7af87", "#d7afaf", "#d7afd7", "#d7afff", "#d7d700", "#d7d75f", "#d7d787", "#d7d7af", "#d7d7d7", "#d7d7ff", "#d7ff00", "#d7ff5f", "#d7ff87", "#d7ffaf", "#d7ffd7", "#d7ffff", "#ff0000", "#ff005f", "#ff0087", "#ff00af", "#ff00d7", "#ff00ff", "#ff5f00", "#ff5f5f", "#ff5f87", "#ff5faf", "#ff5fd7", "#ff5fff", "#ff8700", "#ff875f", "#ff8787", "#ff87af", "#ff87d7", "#ff87ff", "#ffaf00", "#ffaf5f", "#ffaf87", "#ffafaf", "#ffafd7", "#ffafff", "#ffd700", "#ffd75f", "#ffd787", "#ffd7af", "#ffd7d7", "#ffd7ff", "#ffff00", "#ffff5f", "#ffff87", "#ffffaf", "#ffffd7", "#ffffff", "#080808", "#121212", "#1c1c1c", "#262626", "#303030", "#3a3a3a", "#444444", "#4e4e4e", "#585858", "#626262", "#6c6c6c", "#767676", "#808080", "#8a8a8a", "#949494", "#9e9e9e", "#a8a8a8", "#b2b2b2", "#bcbcbc", "#c6c6c6", "#d0d0d0", "#dadada", "#e4e4e4", "#eeeeee"];
+	let objColors = initObjColor(color);
+	let currentTool = pen;
+	let defaultColor = "white";
+	var canvas = document.getElementById('can');
+	var ctx = canvas.getContext('2d');
+	let history=[];
+	
+//draw can
+	
+	
+	addColor();
+	function start(){
+		ctab=A2D(w,h," ");
+		canvas.width = pasX * w;
+		canvas.height = pasY * h;
+		document.querySelector("#divCan").style.width = pasX * w+"px";
+		document.querySelectorAll("img").forEach((e)=>e.style.background = color[idColor]);
+		history.push(cloneTab(ctab));
+		
+		$("#crayon").click();
+		//cadrillage(ctx);
+	}
+	
+	
+//event
+	var isDown = false;
+	document.getElementById("can").addEventListener("mousedown", (e)=>{
+		isDown = true;
+		currentTool(e);
+	});
+	document.addEventListener("mouseup", (e)=>{
+		if(isDown){
+			isDown = false;
+			history.push(cloneTab(ctab));
+		}
+	});
+	
+	canvas.addEventListener("mousemove", (e)=>{
+		if(isDown){
+			currentTool(e);
+		}
+	});
+
+	document.getElementById('exp').addEventListener("click", ()=>{
+		document.querySelector("#res").value = exp();
+	});
+	
+	document.getElementById('copie').addEventListener("click", ()=>{
+		document.querySelector("#res").select();
+		document.execCommand("copy");
+	});
+	
+	//couleur choix 
+	document.querySelector("#color").addEventListener("click", (e)=>{
+		idColor = document.querySelector("#color").value;
+		document.querySelector("#color").style.background = (idColor == 256)? defaultColor: color[idColor];
+	});
+	
+	//pen
+	document.querySelector("#pen").addEventListener("click", (e)=>{
+		currentTool = pen;
+	});	
+	document.querySelector("#crayon").addEventListener("click", (e)=>{
+		currentTool = pen;
+		mouveToElement("selectedTool", e.target.id);
+	});	
+	
+	
+	//bold
+	document.querySelector("#bold").addEventListener("click", (e)=>{
+		currentTool = bold;
+	});
+	document.querySelector("#brosse").addEventListener("click", (e)=>{
+		currentTool = bold;
+		mouveToElement("selectedTool", e.target.id);
+	});
+
+	//bucket
+	document.querySelector("#bucket").addEventListener("click", (e)=>{
+		currentTool = fill;
+	});
+	
+	document.querySelector("#pot").addEventListener("click", (e)=>{
+		currentTool = fill;
+		mouveToElement("selectedTool", e.target.id);
+	});
+	
+	//choix ligne
+	document.querySelector("#nbligne").addEventListener("change", (e)=>{
+		h=document.querySelector("#nbligne").value;
+		start()
+	});
+	
+	//choix colone
+	document.querySelector("#nbColone").addEventListener("change", (e)=>{
+		w=document.querySelector("#nbColone").value;
+		start()
+	});
+
+//TOOLS
+	function pen(e){
+		let colone = parseInt(e.layerX / pasX);
+		let ligne = parseInt(e.layerY / pasY);
+		colorie(ligne, colone);
+	}
+	
+	function bold(e){
+		let colone = parseInt(e.layerX / pasX);
+		let ligne = parseInt(e.layerY / pasY);
+		
+		colorie(ligne, colone);
+		colorie(ligne-1, colone-1);
+		colorie(ligne, colone-1);
+		colorie(ligne-1, colone);
+		colorie(ligne, colone+1);
+		colorie(ligne+1, colone);
+		colorie(ligne+1, colone+1);
+		colorie(ligne+1, colone-1);
+		colorie(ligne-1, colone+1);
+	}
+	
+	function fill(e){
+		let colone = parseInt(e.layerX / pasX);
+		let ligne = parseInt(e.layerY / pasY);
+		
+		bucket([{"ligne":ligne, "colone":colone}], ctab[ligne][colone]);
+	}
+
+//Resources
+	function exp(){
+		let res="";
+		for(var i = 0; i < h; i++){
+		//new line
+		res += "echo -e '";
+			for(var j = 0; j < w; j++){
+				res += ctab[i][j];
+			}
+		//end line
+		res += "'\n";
+		}
+		return res;
+	}
+		
+	function exp2(){
+		let res="";
+		for(var i = 0; i < h; i++){
+		//new line
+		res += "echo -e '";
+			for(var j = 0; j < w; j++){
+				res += ctab[i][j];
+			}
+		//end line
+		res += "'<br/>";
+		}
+		return res;
+	}
+	
+	function A2D(w,h,v){
+		res = [];
+		for(var i = 0; i < h; i++){
+			res.push([]);
+			for(var j = 0; j < w; j++){
+				res[i].push(v);
+			}
+		}
+		return res;
+	}
+	
+	function cadrillage(ctx){
+		ctx.strokeStyle = "#eee";
+		
+		for(var i = 0; i < h; i++){
+			ctx.beginPath();
+			ctx.moveTo(0, pasY*i);
+			ctx.lineTo(pasX*w, pasY*i);
+			ctx.stroke();
+		}
+		for(var j = 0; j < w; j++){
+			ctx.beginPath();
+			ctx.moveTo(pasX*j, 0);
+			ctx.lineTo(pasX*j, pasY*h);
+			ctx.stroke();
+		}
+	}
+	
+	function mkColor(id){
+		if(id==256)
+			return " ";
+		else
+			return "\\e[30;48;5;"+id+"m \\e[0m"
+	}
+	
+	function colorie(ligne, colone){
+		if(ligne >= 0 && ligne < h && colone >= 0 && colone < w){
+			if(idColor == 256){
+				ctx.fillStyle = defaultColor;
+			}
+			else{
+				ctx.fillStyle = color[idColor];
+			}
+			ctx.fillRect(colone*pasX, ligne*pasY, pasX, pasY);
+			ctab[ligne][colone] = mkColor(idColor);
+		}
+	}
+	
+	function bucket(toCheck, v){
+		
+		var c = toCheck.pop();
+		var ligne = c.ligne;
+		var colone = c.colone;
+		if(v != mkColor(idColor))
+		{
+			colorie(ligne, colone);
+			
+			<!-- if(ligne > 0 && colone > 0 && ctab[ligne-1][colone-1] == v) -->
+				<!-- toCheck.push({"ligne":ligne-1, "colone":colone-1}); -->
+				
+			if(colone > 0 && ctab[ligne][colone-1] == v )
+				toCheck.push({"ligne":ligne, "colone":colone-1});
+				
+			if(ligne > 0 && ctab[ligne-1][colone] == v)
+				toCheck.push({"ligne":ligne-1, "colone":colone});
+				
+			<!-- if(colone > 0 && ligne < h-1 && ctab[ligne+1][colone-1] == v) -->
+				<!-- toCheck.push({"ligne":ligne+1, "colone":colone-1}); -->
+				
+			if(colone < w-1 && ctab[ligne][colone+1] == v)
+				toCheck.push({"ligne":ligne, "colone":colone+1});
+				
+			if(ligne < h-1 && ctab[ligne+1][colone] == v)
+				toCheck.push({"ligne":ligne+1, "colone":colone});
+				
+			<!-- if(ligne < h-1 && colone < w-1 && ctab[ligne+1][colone+1] == v) -->
+				<!-- toCheck.push({"ligne":ligne+1, "colone":colone+1}); -->
+				
+			<!-- if(ligne > 0 && colone < w-1 && ctab[ligne-1][colone+1] == v) -->
+				<!-- toCheck.push({"ligne":ligne-1, "colone":colone+1});				 -->
+
+			if(toCheck.length != 0)
+				bucket(toCheck, v);
+				
+		}
+	}
+	
+//add color
+	for(var i = 0; i < color.length; i++){
+		var option = document.createElement("option");
+		option.text = color[i];
+		option.value = i;
+		option.style.background = color[i];
+		document.querySelector("#color").add(option);
+	}
+	
+	var option = document.createElement("option");
+	option.text = "Défault";
+	option.value = 256;
+	option.style.background = defaultColor;
+	document.querySelector("#color").add(option);
+	
+	document.querySelector("#color").value = idColor;
+	document.querySelector("#color").style.background = color[idColor];
+
+//2DDDDDDDDDDDDDDDDD
+	function addColor(){
+		var cote=26;
+		$("#color2D").css({width:cote*16, right: -cote*16-20});
+		$("#selectColorDiv").css({width: cote-4, height: cote-4});
+		
+		for(var i = 0; i < color.length; i++){
+			var d = document.createElement("div");
+			d.style.width = cote+"px";
+			d.style.height = cote+"px";
+			d.style.background = color[i];
+			d.style.display = "inline-block";
+			
+			d.addEventListener("click", function(e){
+				let colone = parseInt(e.layerX / cote);
+				let ligne = parseInt(e.layerY / cote);
+		
+				$("#selectColorDiv").clearQueue();
+				$("#selectColorDiv").animate({
+					left : (e.layerX - e.layerX%cote)+"px", 
+					top : (e.layerY - e.layerY%cote)+"px"});
+					
+				idColor = ligne * 16 + colone;
+				document.querySelectorAll("img").forEach((e)=>e.style.background = color[idColor]);
+			});
+			
+			document.querySelector("#color2D").appendChild(d);
+		}
+	}
+	
+	function annuler(){
+		let state = history.pop();
+		console.log(state.equals(ctab));
+		console.log(history.length);
+		if (state.equals(ctab) && history.length > 0){
+			console.log("aqual")
+			loadState(history.pop());
+		}
+		else
+			loadState(state);
+		
+		
+		if(!history.length)
+			history.push(A2D(w,h," "));
+		
+	}
+	
+	function loadState(state){
+		ctab = cloneTab(state);
+		let svgId = idColor;
+		for(var i = 0; i < h; i++){
+			for(var j = 0; j < w; j++){
+				idColor = getIdColor(ctab[i][j]);
+				colorie(i,j);
+			}
+		}
+		idColor = svgId;
+	}
+	
+	function getIdColor(str){
+		if(str == " ")
+			return 256;
+		else
+			return parseInt(str.substr(11));
+	}
+	
+	function cloneTab(target){
+		let res = [];
+		for(var i = 0; i < h; i++){
+			res.push([]);
+			for(var j = 0; j < w; j++){
+				res[i][j] = target[i][j];
+			}
+		}
+		return res;
+	}
+	
+	/*
+	function cloneTab(newA, target){
+		
+		if(Array.isArray(target[0])){
+			var res = new Array();
+			
+		}
+		else{
+			target.forEach((e)=>res.push(e));
+		}
+		return res;
+	}*/
+	
+	if(Array.prototype.equals)
+    console.warn("Overriding existing Array.prototype.equals. Possible causes: New API defines the method, there's a framework conflict or you've got double inclusions in your code.");
+	// attach the .equals method to Array's prototype to call it on any array
+	Array.prototype.equals = function (array) {
+		// if the other array is a falsy value, return
+		if (!array)
+			return false;
+
+		// compare lengths - can save a lot of time 
+		if (this.length != array.length)
+			return false;
+
+		for (var i = 0, l=this.length; i < l; i++) {
+			// Check if we have nested arrays
+			if (this[i] instanceof Array && array[i] instanceof Array) {
+				// recurse into the nested arrays
+				if (!this[i].equals(array[i]))
+					return false;       
+			}           
+			else if (this[i] != array[i]) { 
+				// Warning - two different object instances will never be equal: {x:20} != {x:20}
+				return false;   
+			}           
+		}       
+		return true;
+	}
+	// Hide method from for-in loops
+	Object.defineProperty(Array.prototype, "equals", {enumerable: false});
+	
+	function mouveToElement(idToMouve, IdTarget){
+		var rect = document.getElementById(IdTarget).getBoundingClientRect();
+		$("#"+idToMouve).animate({
+					left : rect.left-2+"px", 
+					top : rect.top-2+"px"});
+	}
+	
+	function initObjColor(color){
+		res = {};
+		for(var i = 0; i< color.length; i++){
+			res[color[i]] = i;
+		}
+		return res;
+	}
+	
+	start();
+</script>
+
+<input type="file" id="load"/><br>
+<div id="containerImg">
+	<link rel="stylesheet" href="img.css">
+	
+	
+	
+	<div id="actionImg">
+		algo
+		<select id="selectAlgo">
+			<option value="center">center</option>
+			<option value="moyen">Moyen</option>
+			<option value="max">Max</option>
+			<option value="maxMoyenSeuil">MaxMoyenSeuil</option>
+		</select>
+		<button id="convert">Import Image</button>
+		<button id="convertV">Import Video</button>
+		<button id="full">full</button>
+		<button id="close">X</button>
+		
+	</div>
+	<div id="slider"></div>
+	<div id="canvas">
+		
+		<canvas id="img">
+		</canvas>
+		
+		<canvas id="grille">
+		</canvas>
+	</div>
+	
+	<div id="containerVideo">
+	<hr>
+		<!-- <video id="video" src="http://upload.wikimedia.org/wikipedia/commons/7/79/Big_Buck_Bunny_small.ogv" controls="false" crossOrigin="Anonymous"></video> -->
+		<video id="video" src="" controls="false" crossOrigin="Anonymous"></video>
+		
+	</div>
+
+	<script src="three.min.js"></script>
+	<script src="img.js"></script>
+	
+</div>
+<div id="res2">
+</div>
+
+<script src="jquery-ui/jquery-ui.min.js"></script>
+<script src="jQRangeSlider/jQRangeSlider-min.js"></script>
+
+<script src="video.js"></script>
+
